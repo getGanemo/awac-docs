@@ -1,53 +1,63 @@
-# Cloudflare Pages setup for awac.ganemo.com
+# Cloudflare Pages — awac.ganemo.com
 
-Cloudflare's Pages API requires an Account-scoped token; the current token
-in `~/.devvault/providers/cloudflare.yml` is Zone-scoped only. Do these
-5 clicks in the Cloudflare dashboard, then the site is live.
+The site is deployed at <https://awac.ganemo.com> via Cloudflare Pages
+(project name: `awac-docs`).
 
-## Steps
+## Status
 
-1. **Sign in** to <https://dash.cloudflare.com> with the Ganemo account.
-2. **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**.
-3. Authenticate against `getGanemo` GitHub org. Select **`awac-docs`** repository (the one without `-oss` — see governance note below).
-4. Configure the build:
-   - **Project name**: `awac-docs`
-   - **Production branch**: `main`
-   - **Framework preset**: Astro
-   - **Build command**: `npm run build`
-   - **Output directory**: `dist`
-   - **Node version**: `20`
-5. **Save and Deploy**.
+- **Project**: `awac-docs`
+- **Subdomain**: `awac-docs.pages.dev`
+- **Custom domain**: `awac.ganemo.com` (active, status verified, CA: Google Trust Services)
+- **DNS**: CNAME `awac.ganemo.com → awac-docs.pages.dev` in zone `ganemo.com`, proxied through Cloudflare.
+- **SSL**: Universal TLS issued automatically by Cloudflare.
 
-When the first build completes, Pages assigns the project a URL like
-`awac-docs-<hash>.pages.dev`. Note that URL.
+## Deploy mode: Direct Upload + GitHub Action
 
-## Custom domain
+Pages projects can be either GitHub-connected (OAuth) or Direct Upload.
+This project uses **Direct Upload** with a GitHub Action that runs
+`wrangler pages deploy dist --project-name=awac-docs` on push to `main`.
 
-In the Pages project → **Custom domains** → **Set up a custom domain**:
+### Required GitHub secrets (set once)
 
-- Domain: `awac.ganemo.com`
-- Click **Activate domain**.
+The `Deploy to Cloudflare Pages` workflow at `.github/workflows/deploy.yml`
+needs two secrets:
 
-Cloudflare creates the necessary DNS record automatically (CNAME from
-`awac` in zone `ganemo.com` to the `*.pages.dev` URL). It also issues a
-Universal SSL certificate.
+- `CLOUDFLARE_API_TOKEN` — token with `Account.Cloudflare Pages:Edit`
+  scope. Reuse the existing `api_token_pages` from
+  `~/.devvault/providers/cloudflare.yml` or create a new one in
+  the CF dashboard → My Profile → API Tokens.
+- `CLOUDFLARE_ACCOUNT_ID` — `0a0bbf33ec9e54b7ebcccc08af6bcb35`.
 
-Verify in 2-5 minutes:
+```bash
+gh secret set CLOUDFLARE_API_TOKEN --repo getGanemo/awac-docs --body "<token>"
+gh secret set CLOUDFLARE_ACCOUNT_ID --repo getGanemo/awac-docs --body "0a0bbf33ec9e54b7ebcccc08af6bcb35"
+```
+
+After secrets are set, every push to `main` triggers the workflow,
+builds Astro Starlight, and uploads `dist/` to Pages. New version goes
+live within 1-2 minutes.
+
+## Manual deploy (escape hatch)
+
+If the workflow fails or you want to deploy from local:
+
+```bash
+export CLOUDFLARE_API_TOKEN="cfut_..."
+export CLOUDFLARE_ACCOUNT_ID="0a0bbf33ec9e54b7ebcccc08af6bcb35"
+npm install
+npm run build
+npx wrangler pages deploy dist --project-name=awac-docs --branch=main
+```
+
+## Verify
 
 ```bash
 curl -sI https://awac.ganemo.com | head -5
-# Expect: HTTP/2 200, server: cloudflare
+# Expect: HTTP/1.1 200 OK, server: cloudflare
 ```
 
-## Why awac-docs and not awac-docs-oss?
+## Why Direct Upload + Action and not GitHub-connected?
 
-Per `governance/product-structure.md`, repos prefixed with `docs-` are
-internal knowledge documentation. The AWaC public docs site is a
-discrete project — it gets its own canonical name, not the `docs-`
-prefix. The `-oss` sufix is reserved for the public OSS-counterparts
-of repos that have private internal counterparts. AWaC docs has no
-private internal counterpart (the canonical doc lives in the same
-repo), so no suffix is needed.
-
-This is documented in the governance doc under "naming exceptions for
-OSS docs sites".
+Cloudflare Pages' GitHub Connected mode requires an OAuth grant that
+can only be done in the browser dashboard. Direct Upload + Action gives
+the same outcome (auto-deploy on push) without an OAuth step.
