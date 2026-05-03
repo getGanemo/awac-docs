@@ -1,0 +1,56 @@
+---
+title: AWaC — Agent Workspace as Code
+description: Declare an AI-agent workspace once. Compose it from versioned stack repos. Same .agents/, same CLAUDE.md, same tooling on every machine.
+template: splash
+hero:
+  tagline: Declare an AI-agent workspace once. Compose it from versioned stack repos. Same .agents/, same CLAUDE.md, same tooling on every machine.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/getGanemo/workspace-cli
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+  <Card title="Why AWaC" icon="puzzle">
+    Anyone using AI coding agents seriously hits two walls: **drift** (rules that diverge across projects within weeks) and **bloat** (every workspace ending up as a 200-file `.agents/` no one owns). AWaC solves both with versioned stacks + a declarative manifest + deterministic composition.
+  </Card>
+  <Card title="One file describes the workspace" icon="document">
+    A `workspace.yml` lists the stacks. The CLI resolves them, clones the repos they declare, composes `.agents/{rules,skills,workflows}/`, and writes `CLAUDE.md` + `AGENTS.md`. Lockfile makes it reproducible.
+  </Card>
+  <Card title="Agent-first by design" icon="rocket">
+    Every command emits machine-readable output. Errors are `code` + `category` + `cause` + `remediation` so AI agents can react programmatically. No interactive prompts in core commands.
+  </Card>
+  <Card title="100% local, no SaaS" icon="setting">
+    Stacks live in plain GitHub repos. The CLI is `pipx`-installable. No backend, no telemetry. MIT licensed — fork it, vendor it, embed it.
+  </Card>
+</CardGrid>
+
+## Quick try
+
+```bash
+# Install
+TAG=$(gh release view --repo getGanemo/workspace-cli --json tagName -q .tagName)
+gh release download "$TAG" --repo getGanemo/workspace-cli --pattern '*.whl' --dir /tmp/wsp
+pipx install /tmp/wsp/wsp-*.whl
+
+# Compose a workspace
+mkdir my-feature && cd my-feature
+wsp init my-feature --template blank
+wsp bootstrap
+```
+
+## Where next
+
+- [Get started](/getting-started/) — install + first workspace.
+- [Architecture](/architecture/) — manifest, stacks, composition order, lockfile.
+- [CLI reference](/cli-reference/) — every `wsp` command, every flag.
+- [FAQ](/faq/) — what AWaC is, what it isn't, when not to use it.
+- [Decisions (ADRs)](/decisions/) — recorded design choices.
