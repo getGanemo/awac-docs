@@ -73,7 +73,11 @@ Nombre del workspace. Pattern: `^[a-z][a-z0-9-]+$` (lowercase, dígitos, guiones
 
 ### `schema` (required)
 
-Versión del schema del manifest. Hoy: `awac/1`. El CLI valida y rechaza schemas que no entiende, evitando que un workspace creado con AWaC v2 sea procesado mal por una CLI v1.
+Versión del schema del manifest. Valores aceptados:
+- `awac/1` — schema base (CLI v0.1.0+).
+- `awac/2` — agrega `deploy_overrides` y `devvault_overrides` opcionales (CLI v1.1.0+). Required cuando el manifest declara overrides.
+
+El CLI valida y rechaza schemas que no entiende, evitando que un workspace creado con AWaC v3 sea procesado mal por una CLI v1.x.
 
 ### `stacks` (required)
 
@@ -146,6 +150,50 @@ extra_repos:
 ### `private_overlay` (optional)
 
 Capa privada por dev: configuración personal, refs a secretos personales, atajos individuales que **no deben** vivir en stacks compartidos. Aplica DESPUÉS de los stacks. Sus archivos no se promueven con `wsp promote` (no tiene upstream público).
+
+### `deploy_overrides` (optional, requires `schema: awac/2`)
+
+Variaciones per-workspace del `deploy.yml` del producto. El CLI mergea: `final = stack_default ⊕ workspace_override` (workspace gana por campo). Útil para workspaces de prueba que apuntan a staging, swappear target, o excluir un componente.
+
+```yaml
+schema: awac/2
+
+deploy_overrides:
+  api:
+    target: aws_lambda                # debe estar en targets_available del stack
+    odoo_sh:                          # mergea field-by-field con stack default
+      project: my-product-staging
+      branch: 19.0-staging
+  optional_module:
+    skip: true                        # excluye componente del plan en este workspace
+```
+
+Reglas de merge:
+- Scalars: workspace override directo.
+- Arrays (`pre_steps`, `promote_after_pass`): REPLACE entirely.
+- Objects (`odoo_sh`, `aws_ecs`, etc.): mergean field-by-field; arrays internos REPLACE.
+- `skip: true`: excluye el componente del plan resuelto.
+
+Errores:
+- `WSP_018` si declarás overrides con `schema: awac/1`.
+- `WSP_019` si overrideás `target` a un valor fuera de `targets_available` del stack component.
+
+### `devvault_overrides` (optional, requires `schema: awac/2`)
+
+Variaciones per-workspace del `devvault.yml` del producto: mapea `<logical_name>` → `<alternative_path>`. Útil para apuntar un secreto lógico a un sub-vault de staging.
+
+```yaml
+schema: awac/2
+
+devvault_overrides:
+  cloudflare: providers/cloudflare-staging.yml
+```
+
+`wsp secrets check <product>` aplica los overrides automáticamente cuando se ejecuta dentro del workspace. `--no-overrides` para ver raw catalog.
+
+### `product` (optional)
+
+Slug del producto que este workspace targeta. Lo usan `wsp deploy` y `wsp secrets check` cuando se invocan sin `<product>` explícito (infieren desde acá). Si se omite, el CLI infiere desde el primer stack de producto en `stacks`.
 
 ```yaml
 private_overlay:
@@ -298,7 +346,8 @@ Para el caso edge donde necesitás composición más fina (un stack agrega secci
 |---|---|---|
 | `E_INVALID_MANIFEST` | YAML mal formateado o campo requerido faltante | Revisá sintaxis YAML y que `name`, `schema`, `stacks` existan |
 | `E_UNKNOWN_SHORTCUT` | Atajo en `stacks:` que no está en el registry | Usá la forma `<org>/<repo>` o agregá el atajo al registry |
-| `E_INVALID_SCHEMA` | `schema:` no es `awac/1` | Actualizá el CLI o ajustá el schema |
+| `E_INVALID_SCHEMA` | `schema:` no es `awac/1` ni `awac/2` | Actualizá el CLI o ajustá el schema |
+| `WSP_018` | overrides presentes con `schema: awac/1` | Bumpeá a `schema: awac/2` |
 | `E_INVALID_NAME` | `name:` no matchea pattern | Usá lowercase, dígitos, guiones medios, debe empezar con letra |
 | `E_REPO_NOT_FOUND` | Repo declarado en stack o `extra_repos` no existe en GitHub | Verificá el path o creá el repo |
 

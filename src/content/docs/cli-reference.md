@@ -4,7 +4,7 @@ title: "Referencia del CLI `wsp`"
 
 `wsp` es la herramienta de línea de comandos de AWaC. **No la corrés vos directamente** — la corre tu agente IA por vos. Sin embargo, todos los flags y formatos de output están documentados acá para que cualquier persona (o agente) pueda entender qué hace cada cosa y diagnosticar problemas.
 
-> Última actualización mayor: 2026-05-03 (v0.9.0).
+> Última actualización mayor: 2026-05-04 (**v1.1.0**).
 
 ## Roadmap del CLI
 
@@ -19,7 +19,9 @@ title: "Referencia del CLI `wsp`"
 | **v0.7.0** | + `deploy <product>`, `secrets check <product>` | 2026-05-03 |
 | **v0.8.0** | + `audit <product>`, scaffold-stack auto-register en core, scaffold-repo `--aws-account`/`--domain` para Cat A descriptions | 2026-05-03 |
 | **v0.9.0** | + scaffold-stack `--update --push-direct` (skip PR, push to main) | 2026-05-03 |
-| v1.x (futuro) | `+ promote`, `worktree add/list/remove`, `explain`, `diff` | Planeado |
+| **v1.0.0** | First public release (MIT license, public reference stacks, OSS launch) | 2026-05-03 |
+| **v1.1.0** | + schemas `awac/2` + `deploy/2` + `lock/2`, bootstrap materializes `.stack/<product>/`, doctor `stack_metadata_drift`, deploy/secrets `--no-overrides`, `init --interactive`/`--yes`, `wsp guide <topic>`, `wsp migrate-deploy <product>`, `wsp templates --json` exposes `requires_confirmation`/`composes_stacks`/`clones_repos` | 2026-05-04 |
+| v1.2+ (futuro) | `+ promote`, `worktree add/list/remove`, `explain`, `diff` | Planeado |
 
 Repo: <https://github.com/getGanemo/workspace-cli>. Releases (wheels): <https://github.com/getGanemo/workspace-cli/releases>.
 
@@ -28,7 +30,7 @@ Repo: <https://github.com/getGanemo/workspace-cli>. Releases (wheels): <https://
 ### Modo user (recomendado)
 
 ```bash
-TAG=v0.9.0
+TAG=v1.1.0
 gh release download "$TAG" --repo getGanemo/workspace-cli --pattern '*.whl' --dir /tmp/wsp
 pipx install /tmp/wsp/wsp-*.whl
 ```
@@ -195,7 +197,7 @@ CHECKS (~11):
   agent_stack/awac_yml_repos    # awac.yml lista repos
   agent_stack/feature_template  # templates/feature.yml presente
   agent_stack/devvault_yml      # válido contra schema devvault/1
-  agent_stack/deploy_yml        # válido contra schema deploy/1 (warn si falta)
+  agent_stack/deploy_yml        # válido contra schema deploy/1 o deploy/2 (warn si falta)
   registry/shortcut             # shortcut <product> en core
   registry/template             # template <product>-feature en core
 
@@ -208,20 +210,41 @@ Step 8 obligatorio del workflow `onboard_new_product` (incluido en el stack core
 
 ### `wsp deploy <product> [options]`
 
-Lee `<product>/agent-stack/deploy.yml`, valida contra schema `deploy/1`, e **imprime el plan**. Plan-only por diseño — la ejecución es workflow-driven (router `deploy_product`). ADR 009.
+Lee `<product>/agent-stack/deploy.yml`, valida contra schema `deploy/1` o `deploy/2`, e **imprime el plan**. Plan-only por diseño — la ejecución es workflow-driven (router `deploy_product`). ADR 009.
+
+Cuando se ejecuta dentro de un workspace, **aplica `workspace.yml#deploy_overrides`** sobre el spec del stack (workspace gana por campo). Plaintext output marca componentes con `(workspace override applied)`. Pasar `--no-overrides` para ver raw stack default.
 
 ### `wsp secrets check <product> [options]`
 
 Resuelve `<product>/agent-stack/devvault.yml` + `~/.devvault/.config.yml`, reporta por entrada `[ok]/[missing]/[unreadable]`. Read-only, nunca imprime valores.
 
+Cuando se ejecuta dentro de un workspace, aplica `workspace.yml#devvault_overrides` sobre el catálogo. Pasar `--no-overrides` para ver raw catalog defaults.
+
+### `wsp init [options]` — flags v1.1.0
+
+| Flag | Descripción |
+|---|---|
+| `--interactive` / `-i` | Wizard mode: lista templates, pide nombre, valida kebab-case, confirma producto templates. |
+| `--yes` / `-y` | Auto-confirm para product templates (uso en CI/agents post-confirmación humana). |
+
+Templates de producto (`<org>/agent-stack/templates/<X>-feature.yml`) **refusan** scaffolding sin `--yes` ni `--interactive` (error WSP_020). Esto previene que un agente infiera template por nombre de carpeta y arrastre al usuario al flow del producto equivocado.
+
+### `wsp guide <topic>` (v1.1.0)
+
+Imprime guías embebidas en el binario — diseñado para agentes que llegan a un workspace sin `.agents/` cargado y necesitan orientación. Topics: `init`, `onboard-product`, `deploy`, `secrets`, `discover`. `wsp guide` (sin topic) lista los topics.
+
+### `wsp migrate-deploy <product>` (v1.1.0)
+
+Lee `<product>/agent-stack/deploy.yml` desde el cache. Si está en `deploy/1`, lo reescribe a `deploy/2` agregando `targets_available` con un solo elemento (el target actual; broaden manualmente). El patched file se deja para que el dev abra PR al stack repo.
+
 ### `wsp templates / shortcuts / doctor / schema`
 
 | Comando | Output |
 |---|---|
-| `wsp templates [--json]` | Lista templates del registry. |
+| `wsp templates [--json]` | Lista templates del registry. v1.1.0+: el output JSON incluye `requires_confirmation`, `composes_stacks`, `clones_repos`, `embeds_in_product_flow`. Plaintext flagga product templates con `[product]`. |
 | `wsp shortcuts [--json]` | Lista shortcuts del registry. |
-| `wsp doctor [--json]` | 6 checks: git, gh, cache, registry, devvault_config, governance_mirror. |
-| `wsp schema <workspace\|awac\|lock\|deploy\|devvault>` | JSON Schema crudo. |
+| `wsp doctor [--json]` | 7 checks v1.1.0: git, gh, cache, registry, devvault_config, governance_mirror, **stack_metadata_drift** (nuevo: detecta edits locales a `.stack/<product>/` no sincronizados al stack repo). |
+| `wsp schema <workspace\|awac\|lock\|deploy\|devvault>` | JSON Schema crudo. workspace devuelve `awac/2`, deploy devuelve `deploy/2`, lock devuelve `lock/2` (todos backward-compat con v1). |
 | `wsp --agent-manifest` | Catálogo machine-readable de comandos para auto-discovery. |
 
 ## Códigos de error estructurados
@@ -244,6 +267,10 @@ Todos los errores llevan `code` (WSP_NNN), `category`, `cause`, `remediation`, o
 | WSP_017–WSP_021 | varios | scaffold-repo errors |
 | WSP_022–WSP_024 | varios | deploy errors |
 | WSP_025–WSP_026 | varios | secrets errors |
+| WSP_018 | schema | `deploy_overrides`/`devvault_overrides` requieren `schema: awac/2` |
+| WSP_019 | schema | override `target` fuera de `targets_available` del componente |
+| WSP_020 | input | template de producto requiere `--yes` o `--interactive` |
+| WSP_021 | filesystem | drift detectado en `.stack/<product>/` vs lockfile |
 
 ## Variables de entorno
 
@@ -259,4 +286,5 @@ Todos los errores llevan `code` (WSP_NNN), `category`, `cause`, `remediation`, o
 - [`03-manifest-reference.md`](03-manifest-reference.md) — `workspace.yml`.
 - [`04-stack-reference.md`](04-stack-reference.md) — `awac.yml` + `org_scaffold`.
 - [`08-creating-new-stack.md`](08-creating-new-stack.md) — `scaffold-stack` en detalle.
-- [`14-deploy-and-secrets.md`](14-deploy-and-secrets.md) — `deploy/1` + `devvault/1` + sus comandos.
+- [`14-deploy-and-secrets.md`](14-deploy-and-secrets.md) — `deploy/2` + `devvault/1` + workspace overrides + sus comandos.
+- [`15-stack-anatomy.md`](15-stack-anatomy.md) — qué se materializa al workspace (`.stack/<product>/`) vs assets compositables vs repos clonados (modelo mental para un workspace AWaC completo).
