@@ -4,7 +4,7 @@ title: "Deploy + Secrets — la convención per-producto"
 
 Cada producto tiene **su propio plan de deploy** y **su propio catálogo de secretos**. AWaC formaliza ambos como assets versionados que viven en `<product-org>/agent-stack/`. Los flujos (cómo se ejecuta cada deploy, cómo se resuelven los secretos) son universales y viven en `<transversal-org>/agent-stack-core` + topical stacks.
 
-> Introducido en CLI v0.6.0 (schemas) + v0.7.0 (comandos `wsp deploy` y `wsp secrets check`).
+> Introducido en CLI v0.6.0 (schemas) + v0.7.0 (comandos `wsp deploy` y `wsp secrets check`). Extendido en **v1.1.0** con schemas `deploy/2` + `awac/2` que clarifican el modelo de capas y agregan overrides per-workspace (ver "Modelo three-layer" abajo).
 
 ## Modelo de dos archivos por producto
 
@@ -17,24 +17,27 @@ Cada producto tiene **su propio plan de deploy** y **su propio catálogo de secr
 
 Schemas formales: `wsp schema deploy` y `wsp schema devvault`.
 
+A partir de CLI v1.1.0 estos archivos se **materializan** como mirror read-only en el workspace local bajo `.stack/<product>/` cuando `wsp bootstrap` resuelve un template de producto. Cada archivo lleva un header `SYNCED FROM <repo>`. `wsp doctor` reporta drift si el dev edita el mirror sin propagar al stack repo. Para variaciones per-workspace (test → staging, sub-vaults distintos, target alternativo), el contrato es `workspace.yml#deploy_overrides` + `#devvault_overrides` — NO editar el mirror.
+
 ---
 
-## `deploy.yml` (schema `deploy/1`)
+## `deploy.yml` (schema `deploy/2`)
 
-Declara qué se deploya, en qué orden, contra qué targets, y qué pre-steps + aprobaciones humanas son obligatorios.
+Declara qué se deploya, en qué orden, contra qué targets, y qué pre-steps + aprobaciones humanas son obligatorios. **Cada campo de un componente es un STACK DEFAULT overrideable** por `workspace.yml#deploy_overrides[<name>]` (workspace gana por campo).
 
 ### Estructura
 
 ```yaml
-schema: deploy/1
+schema: deploy/2
 product: <slug>                       # debe coincidir con awac.yml#product
 description: <texto opcional>
 
 components:
-  - name: <stable_id>                 # snake_case o kebab-case
-    target: <target_type>             # ver tabla abajo
-    repo: <org>/<name>                # opcional (para componentes cross-repo)
-    requires_human_approval: true     # default true
+  - name: <stable_id>                 # snake_case o kebab-case (estable; los workspaces lo referencian)
+    target: <target_type>             # default; overrideable
+    targets_available: [<target>, ...] # opcional; constraint para overrides del workspace
+    repo: <org>/<name>                # opcional default (para componentes cross-repo)
+    requires_human_approval: true     # default true; overrideable
     pre_steps:                        # workflow IDs que deben PASAR antes
       - run_tests_local
       - terraform_plan
@@ -43,9 +46,11 @@ components:
         target_branch: <branch>
         require_pass_on: <target>     # solo promueve si ese target acka
     rollback_window_minutes: 30       # opcional
-    <target>:                          # sub-bloque target-específico
+    <target>:                          # sub-bloque target-específico (defaults)
       ...
 ```
+
+`deploy/1` specs siguen siendo válidos. `wsp migrate-deploy <product>` reescribe el spec en cache + deja un patch para PR al stack repo (agrega `targets_available` con un solo elemento — el target actual; broaden manualmente).
 
 ### Targets soportados
 
@@ -96,10 +101,43 @@ El CLI **no ejecuta el deploy** — solo planifica. La ejecución es workflow-dr
 ### Comando CLI
 
 ```bash
-wsp deploy <product> [--component <name>] [--json]
+wsp deploy <product> [--component <name>] [--no-overrides] [--json]
 ```
 
 Plan-only: imprime los componentes resueltos, sus targets, pre_steps, ack requirement, promotions. Validación schema antes de imprimir. Para ejecutar de verdad → invocar el workflow router.
+
+Cuando se ejecuta dentro de un workspace, **aplica `workspace.yml#deploy_overrides`** sobre el spec del stack (workspace gana). El plaintext output marca componentes con `(workspace override applied)` y lista los campos que difieren del stack default. Pasar `--no-overrides` para ver el raw stack default.
+
+---
+
+## Workspace overrides (CLI v1.1.0+)
+
+Un workspace puede declarar variaciones per-feature **sin tocar el spec del stack** (que es prod-truth para todos los workspaces del producto). Útil para workspaces de prueba que apuntan a staging, sub-vaults distintos, etc.
+
+```yaml
+# workspace.yml
+schema: awac/2                        # required cuando hay overrides
+
+deploy_overrides:
+  api:
+    target: aws_lambda                # swap target (válido si stack tiene targets_available que lo permita)
+    odoo_sh:                          # mergea field-by-field con stack default
+      project: my-product-staging
+      branch: 19.0-staging
+  optional_module:
+    skip: true                        # excluye componente del plan en este workspace
+
+devvault_overrides:
+  cloudflare: providers/cloudflare-staging.yml   # path alternativo para el secreto lógico
+```
+
+**Reglas de merge**:
+- Scalars (`target`, `repo`, `requires_human_approval`, `rollback_window_minutes`) → workspace override directo.
+- Arrays (`pre_steps`, `promote_after_pass`) → REPLACE entirely.
+- Objects (`odoo_sh`, `aws_ecs`, etc.) → mergean field-by-field; arrays internos como `modules` REPLACE.
+- `skip: true` → excluye el componente del plan resuelto.
+- Override de `target` a un valor fuera de `targets_available` → CLI emite WSP_019.
+- Cualquier override en un workspace con schema `awac/1` → CLI emite WSP_018 ("schema awac/2 required for overrides").
 
 ---
 
