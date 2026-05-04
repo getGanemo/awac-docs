@@ -38,13 +38,24 @@ import { Card, CardGrid, Aside, Tabs, TabItem, Code } from '@astrojs/starlight/c
   </Card>
 </CardGrid>
 
-## Paste this to your agent
+## Two-line agent setup (v1.3.0+)
 
-The fastest path: open Claude Code, Cursor, Aider, or any agent CLI in an empty folder, and paste the block below. The agent does the rest — installs the CLI, reads its embedded guides, asks you the right questions, then composes the workspace.
+The fastest path: open Claude Code, Cursor, Aider, or any agent CLI in an empty folder, and paste these **two lines** into the chat. Your agent does the rest.
 
-<Aside type="tip" title="Why this works">
-The CLI binary is named `wsp`, not `awac`. Agents don't know that without context — that's why this prompt names it explicitly. It also points at the `wsp guide` command (embedded in the binary) so the agent can self-orient before acting.
+```text
+Install AWaC if not present (see https://github.com/getGanemo/workspace-cli-oss/releases/latest), then run `awac guide quickstart` and follow it step by step.
+```
+
+That's it. The CLI ships an embedded `quickstart` guide that tells the agent how to install/upgrade itself, self-orient, ask you the right questions (workspace name + template), scaffold, and report. No long prompt to copy.
+
+<Aside type="tip" title="Why two lines is enough">
+Up to v1.2.x the recommended path was to copy a ~60-line prompt from this page. From v1.3.0+ that whole prompt lives **inside the CLI binary** as `awac guide quickstart`. Your agent runs one command and reads it locally. The site only needs to point at the install + the command.
 </Aside>
+
+<details>
+<summary>Long-form prompt (legacy, v1.2.x and below)</summary>
+
+If you're on v1.2.x and can't upgrade yet, paste this entire block into your agent's chat instead:
 
 ````md
 You are an AI coding agent. Set up an AWaC workspace in this folder.
@@ -121,6 +132,8 @@ Rules:
 ````
 
 After paste, the agent will install + self-orient + ask you the two questions (name, template) before scaffolding. If your agent skips a step or infers a template without asking, that's a bug — send us a [GitHub issue](https://github.com/getGanemo/workspace-cli-oss/issues/new) with the transcript.
+
+</details>
 
 ## Manual install (no agent)
 
