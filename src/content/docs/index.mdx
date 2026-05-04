@@ -52,42 +52,58 @@ You are an AI coding agent. Set up an AWaC workspace in this folder.
 AWaC ("Agent Workspace as Code") is a Terraform-style tool: a `workspace.yml`
 manifest declares which versioned "stack" repos compose into this workspace's
 `.agents/` folder + `CLAUDE.md` + `AGENTS.md`. The CLI binary is named `wsp`
-(not `awac`). Site: https://awac.ganemo.com — public repo:
+(also installed as `awac` from v1.2.0+). Public repo:
 https://github.com/getGanemo/workspace-cli-oss
 
-Step 1 — Install (skip if `python -m wsp --version` already works):
-    Latest release wheel:
-    https://github.com/getGanemo/workspace-cli-oss/releases/latest
-    Install:
-      gh release download --repo getGanemo/workspace-cli-oss \
-        --pattern '*.whl' --dir /tmp/wsp
-      pipx install /tmp/wsp/wsp-*.whl
-    (If gh is not installed, fall back to `pip install` from the wheel URL.)
+Required CLI version: 1.2.0 or later.
+
+Step 1 — Detect CLI state (DO NOT install or upgrade yet, just probe):
+    awac --version 2>/dev/null || python -m wsp --version 2>/dev/null \
+      || echo "NOT_INSTALLED"
+
+  Three branches:
+    a) Output starts with "wsp," or "awac," AND version >= 1.2.0
+       → already installed and current. SKIP to Step 2.
+    b) Output starts with "wsp," or "awac," AND version <  1.2.0
+       → installed but outdated. Upgrade with:
+           gh release download --repo getGanemo/workspace-cli-oss \
+             --pattern '*.whl' --dir /tmp/wsp
+           pipx install --force /tmp/wsp/wsp-*.whl
+       Then continue to Step 2.
+    c) Output is "NOT_INSTALLED" (or command failed)
+       → install with:
+           gh release download --repo getGanemo/workspace-cli-oss \
+             --pattern '*.whl' --dir /tmp/wsp
+           pipx install /tmp/wsp/wsp-*.whl
+       (If `gh` is not installed, fall back to plain `pip install` from
+       the wheel URL at https://github.com/getGanemo/workspace-cli-oss/releases/latest)
+       Then continue to Step 2.
 
 Step 2 — Self-orient. Run BEFORE doing anything else:
-    python -m wsp guide discover
-    python -m wsp guide init
-    python -m wsp templates --json
+    awac guide discover
+    awac guide init
+    awac templates --json
 
 Step 3 — Ask me, do not infer:
     - The workspace name (kebab-case lowercase).
     - Which template I want. Read out the available templates from
-      `wsp templates --json` and show me which are "product templates"
+      `awac templates --json` and show me which are "product templates"
       (the ones flagged `requires_confirmation: true` — those clone product
       repos and embed me in a product-specific deploy/secrets flow).
-    - DO NOT infer the template from the folder name. Folder prefixes
+    - DO NOT infer the template from the folder name. Folder prefixes are
       coincidence; templates carry semantic blast radius. If unclear, default
       to `blank`.
 
 Step 4 — Once I confirm name + template:
-    python -m wsp init <name> --template <T>     # add --yes only if
-                                                  # template is product-specific
-                                                  # AND I confirmed in this turn
-    python -m wsp bootstrap
+    awac init <name> --template <T>     # add --yes only if template is
+                                         # product-specific AND I confirmed
+                                         # in this turn
+    cd <name>
+    awac bootstrap
 
 Step 5 — If template was product-specific, after bootstrap run:
-    python -m wsp secrets check <product>        # validates my local vault
-    python -m wsp deploy <product>               # plan-only
+    awac secrets check <product>        # validates my local vault
+    awac deploy <product>               # plan-only
 
 Step 6 — Report what got created (file count, .agents/ tree summary, any
 missing secrets) and stop. Do not start writing product code.
@@ -99,6 +115,9 @@ Rules:
   mirror of the product stack. For per-workspace variation, edit
   `workspace.yml#deploy_overrides` or `#devvault_overrides`.
 - Never push or commit anything I haven't asked for.
+- If your org has its own governance doc, set `WSP_GOVERNANCE_DOC=<url>`
+  before running scaffold-repo / scaffold-stack so seed READMEs reference
+  it instead of the AWaC public default.
 ````
 
 After paste, the agent will install + self-orient + ask you the two questions (name, template) before scaffolding. If your agent skips a step or infers a template without asking, that's a bug — send us a [GitHub issue](https://github.com/getGanemo/workspace-cli-oss/issues/new) with the transcript.
