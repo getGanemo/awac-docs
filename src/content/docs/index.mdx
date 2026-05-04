@@ -7,16 +7,21 @@ hero:
   image:
     file: ../../assets/logo.svg
   actions:
-    - text: Get started
+    - text: Paste this to your agent
+      link: '#paste-this-to-your-agent'
+      icon: rocket
+      variant: primary
+    - text: Manual install
       link: /getting-started/
       icon: right-arrow
-      variant: primary
+      variant: secondary
     - text: View on GitHub
-      link: https://github.com/getGanemo/workspace-cli
+      link: https://github.com/getGanemo/workspace-cli-oss
       icon: external
+      variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, Aside, Tabs, TabItem, Code } from '@astrojs/starlight/components';
 
 <CardGrid stagger>
   <Card title="Why AWaC" icon="puzzle">
@@ -26,31 +31,104 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
     A `workspace.yml` lists the stacks. The CLI resolves them, clones the repos they declare, composes `.agents/{rules,skills,workflows}/`, and writes `CLAUDE.md` + `AGENTS.md`. Lockfile makes it reproducible.
   </Card>
   <Card title="Agent-first by design" icon="rocket">
-    Every command emits machine-readable output. Errors are `code` + `category` + `cause` + `remediation` so AI agents can react programmatically. No interactive prompts in core commands.
+    Every command emits machine-readable output. Errors are `code` + `category` + `cause` + `remediation` so AI agents can react programmatically. The CLI ships embedded `wsp guide <topic>` so an agent in a fresh dir can self-orient before acting.
   </Card>
   <Card title="100% local, no SaaS" icon="setting">
     Stacks live in plain GitHub repos. The CLI is `pipx`-installable. No backend, no telemetry. MIT licensed — fork it, vendor it, embed it.
   </Card>
 </CardGrid>
 
-## Quick try
+## Paste this to your agent
+
+The fastest path: open Claude Code, Cursor, Aider, or any agent CLI in an empty folder, and paste the block below. The agent does the rest — installs the CLI, reads its embedded guides, asks you the right questions, then composes the workspace.
+
+<Aside type="tip" title="Why this works">
+The CLI binary is named `wsp`, not `awac`. Agents don't know that without context — that's why this prompt names it explicitly. It also points at the `wsp guide` command (embedded in the binary) so the agent can self-orient before acting.
+</Aside>
+
+````md
+You are an AI coding agent. Set up an AWaC workspace in this folder.
+
+AWaC ("Agent Workspace as Code") is a Terraform-style tool: a `workspace.yml`
+manifest declares which versioned "stack" repos compose into this workspace's
+`.agents/` folder + `CLAUDE.md` + `AGENTS.md`. The CLI binary is named `wsp`
+(not `awac`). Site: https://awac.ganemo.com — public repo:
+https://github.com/getGanemo/workspace-cli-oss
+
+Step 1 — Install (skip if `python -m wsp --version` already works):
+    Latest release wheel:
+    https://github.com/getGanemo/workspace-cli-oss/releases/latest
+    Install:
+      gh release download --repo getGanemo/workspace-cli-oss \
+        --pattern '*.whl' --dir /tmp/wsp
+      pipx install /tmp/wsp/wsp-*.whl
+    (If gh is not installed, fall back to `pip install` from the wheel URL.)
+
+Step 2 — Self-orient. Run BEFORE doing anything else:
+    python -m wsp guide discover
+    python -m wsp guide init
+    python -m wsp templates --json
+
+Step 3 — Ask me, do not infer:
+    - The workspace name (kebab-case lowercase).
+    - Which template I want. Read out the available templates from
+      `wsp templates --json` and show me which are "product templates"
+      (the ones flagged `requires_confirmation: true` — those clone product
+      repos and embed me in a product-specific deploy/secrets flow).
+    - DO NOT infer the template from the folder name. Folder prefixes
+      coincidence; templates carry semantic blast radius. If unclear, default
+      to `blank`.
+
+Step 4 — Once I confirm name + template:
+    python -m wsp init <name> --template <T>     # add --yes only if
+                                                  # template is product-specific
+                                                  # AND I confirmed in this turn
+    python -m wsp bootstrap
+
+Step 5 — If template was product-specific, after bootstrap run:
+    python -m wsp secrets check <product>        # validates my local vault
+    python -m wsp deploy <product>               # plan-only
+
+Step 6 — Report what got created (file count, .agents/ tree summary, any
+missing secrets) and stop. Do not start writing product code.
+
+Rules:
+- The CLI emits structured JSON errors. Parse `code` + `remediation` and
+  follow the remediation; do not improvise around errors.
+- Never edit files under `.stack/<product>/` directly — that's a read-only
+  mirror of the product stack. For per-workspace variation, edit
+  `workspace.yml#deploy_overrides` or `#devvault_overrides`.
+- Never push or commit anything I haven't asked for.
+````
+
+After paste, the agent will install + self-orient + ask you the two questions (name, template) before scaffolding. If your agent skips a step or infers a template without asking, that's a bug — send us a [GitHub issue](https://github.com/getGanemo/workspace-cli-oss/issues/new) with the transcript.
+
+## Manual install (no agent)
+
+If you prefer to run the commands yourself:
 
 ```bash
-# Install
-TAG=$(gh release view --repo getGanemo/workspace-cli --json tagName -q .tagName)
-gh release download "$TAG" --repo getGanemo/workspace-cli --pattern '*.whl' --dir /tmp/wsp
+# 1. Install latest release (v1.1.0+)
+TAG=$(gh release view --repo getGanemo/workspace-cli-oss --json tagName -q .tagName)
+gh release download "$TAG" --repo getGanemo/workspace-cli-oss --pattern '*.whl' --dir /tmp/wsp
 pipx install /tmp/wsp/wsp-*.whl
 
-# Compose a workspace
-mkdir my-feature && cd my-feature
+# 2. Verify
+wsp --version
+wsp guide init           # read the path before acting
+
+# 3. Compose a workspace
 wsp init my-feature --template blank
+cd my-feature
 wsp bootstrap
 ```
 
 ## Where next
 
-- [Get started](/getting-started/) — install + first workspace.
+- [Get started](/getting-started/) — install + first workspace + the agent flow above explained.
 - [Architecture](/architecture/) — manifest, stacks, composition order, lockfile.
 - [CLI reference](/cli-reference/) — every `wsp` command, every flag.
+- [Deploy + secrets](/deploy-and-secrets/) — `deploy.yml`, `devvault.yml`, workspace overrides.
+- [Stack anatomy](/stack-anatomy/) — what materializes into the workspace vs. what stays in cache.
 - [FAQ](/faq/) — what AWaC is, what it isn't, when not to use it.
 - [Decisions (ADRs)](/decisions/) — recorded design choices.
