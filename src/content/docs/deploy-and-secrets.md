@@ -19,6 +19,20 @@ Schemas formales: `wsp schema deploy` y `wsp schema devvault`.
 
 A partir de CLI v1.1.0 estos archivos se **materializan** como mirror read-only en el workspace local bajo `.stack/<product>/` cuando `wsp bootstrap` resuelve un template de producto. Cada archivo lleva un header `SYNCED FROM <repo>`. `wsp doctor` reporta drift si el dev edita el mirror sin propagar al stack repo. Para variaciones per-workspace (test → staging, sub-vaults distintos, target alternativo), el contrato es `workspace.yml#deploy_overrides` + `#devvault_overrides` — NO editar el mirror.
 
+### Stacks transversales con artefactos desplegables
+
+`deploy.yml` y `devvault.yml` no son exclusivos de stacks de producto. Un **stack transversal** los declara **iff tiene artefactos desplegables propios**.
+
+| Stack | Tipo | ¿Tiene `deploy.yml` / `devvault.yml`? |
+|---|---|---|
+| `<transversal-org>/agent-stack-core` (`getGanemo`) | conocimiento puro (rules/skills/workflows/schemas) | **NO** |
+| `<transversal-org>/agent-stack-aws`, `-cloudflare`, `-mcp`, `-research` | conocimiento puro (workflows + skills topicales) | **NO** |
+| `odoopartners/agent-stack` | transversal con artefactos: cada módulo Odoo bajo su gobierno es un deployable | **SÍ** — declara `odoo_module_template` (Odoo.SH staging → promote a `odoopartners/<module>` en `{ver}.0`) |
+
+Ejemplo concreto: `odoopartners/agent-stack/deploy.yml` define el componente `odoo_module_template` con los defaults del patrón Odoo.SH (target, pre_steps, rollback, branch convention). Workspaces standalone (creados con `templates/{single,existing}-modules.yml`) lo consumen vía `workspace.yml#deploy_overrides` rellenando `repo` (staging), `odoo_sh.project`, `odoo_sh.modules` y `promote_after_pass` por módulo. Workspaces compuestos con un producto SaaS (orquestio, emboux) hoy redeclaran la misma forma en el `deploy.yml` del producto, anotando comment-cross-reference; cuando `from_template` cross-stack ship en CLI, esos componentes migrarán a heredar.
+
+**Regla de governance:** si un stack transversal no tiene artefactos desplegables propios, NO debe declarar `deploy.yml` / `devvault.yml`. Esto evita catálogos huecos y secretos sin owner. Inverso: cualquier transversal con artefactos (presente: odoopartners; futuro: stacks que publiquen libraries con su propio CI/CD) declara ambos archivos.
+
 ---
 
 ## `deploy.yml` (schema `deploy/2`)
