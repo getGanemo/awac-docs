@@ -4,6 +4,18 @@ title: "Templates de `workspace.yml`"
 
 Los templates son **skeletons** de `workspace.yml` reusables. Cuando el agente corre `wsp init <name> --template <id>`, el CLI fetchea el template, substituye placeholders (`<CHANGE-ME>` con el nombre del workspace), y escribe el `workspace.yml` resultante en la carpeta del workspace.
 
+:::note[Qué templates trae la distribución pública OSS]
+La distribución pública de AWaC (registry por defecto `getGanemo/agent-stack-core-oss`) trae **solo estos templates genéricos**:
+
+`blank` · `research-spike` · `branding` · `empresarial` · `tesis`
+
+Los templates específicos de Odoo (`odoo-module`, `odoo-modules-existing`) y los `<product>-feature` que aparecen más abajo son **ejemplos ilustrativos** de cómo se ve el catálogo en una topología privada completa — clonan repos de orgs privadas y NO vienen en el registry público. Si corrés `wsp init mi-ws --template odoo-module` contra el registry OSS vas a obtener `[WSP_008] Unknown template`.
+
+**Fuente de verdad de lo que tenés disponible:** corré siempre `wsp templates` (o `wsp templates --json`) — lista los templates del registry que estés usando, no los del ejemplo de esta página.
+
+¿Querés un template de Odoo en tu propio registry? Creá el archivo `templates/odoo-module.yml` en un stack tuyo y registralo en tu `agent-stack-core(-oss fork)/awac.yml` (ver [Crear una plantilla nueva](#crear-una-plantilla-nueva)).
+:::
+
 ## Arquitectura: catálogo central + archivos distribuidos
 
 El sistema de templates tiene **dos niveles** que conviene tener claros:
@@ -52,16 +64,20 @@ erp-partners/agent-stack/templates/
 
 ## Ejemplo de templates en una topología típica
 
-| Template | Path real | Descripción |
-|---|---|---|
-| `blank` | `<transversal-org>/agent-stack-core/templates/blank.yml` | Workspace mínimo. Editá a tu gusto. |
-| `research-spike` | `<transversal-org>/agent-stack-research/templates/spike.yml` | Investigación / spike, sin código de producto |
-| `branding` | `<transversal-org>/agent-stack-research/templates/branding.yml` | Workspace para crear archivo de marca de un producto |
-| `empresarial` | `<transversal-org>/agent-stack-research/templates/empresarial.yml` | Proyecto empresarial generalista |
-| `tesis` | `<transversal-org>/agent-stack-research/templates/tesis.yml` | Proyecto académico / tesis |
-| `odoo-module` | `erp-partners/agent-stack/templates/single-module.yml` | Desarrollo de un módulo Odoo standalone |
-| `odoo-modules-existing` | `erp-partners/agent-stack/templates/existing-modules.yml` | Trabajar sobre módulos Odoo existentes |
-| `<product>-feature` | `<product-org>/agent-stack/templates/feature.yml` | Feature work on a specific product (one entry per product) |
+La tabla siguiente es **ilustrativa**: muestra cómo se vería el catálogo de templates en una topología privada completa (con stacks de producto y de Odoo). La columna **Disponibilidad** indica cuáles vienen en la distribución pública OSS y cuáles son ejemplos que tendrías que crear/registrar en tu propio entorno.
+
+| Template | Path real | Descripción | Disponibilidad |
+|---|---|---|---|
+| `blank` | `<transversal-org>/agent-stack-core/templates/blank.yml` | Workspace mínimo. Editá a tu gusto. | ✅ OSS |
+| `research-spike` | `<transversal-org>/agent-stack-research/templates/spike.yml` | Investigación / spike, sin código de producto | ✅ OSS |
+| `branding` | `<transversal-org>/agent-stack-research/templates/branding.yml` | Workspace para crear archivo de marca de un producto | ✅ OSS |
+| `empresarial` | `<transversal-org>/agent-stack-research/templates/empresarial.yml` | Proyecto empresarial generalista | ✅ OSS |
+| `tesis` | `<transversal-org>/agent-stack-research/templates/tesis.yml` | Proyecto académico / tesis | ✅ OSS |
+| `odoo-module` | `erp-partners/agent-stack/templates/single-module.yml` | Desarrollo de un módulo Odoo standalone | ⚙️ Ejemplo — no en OSS |
+| `odoo-modules-existing` | `erp-partners/agent-stack/templates/existing-modules.yml` | Trabajar sobre módulos Odoo existentes | ⚙️ Ejemplo — no en OSS |
+| `<product>-feature` | `<product-org>/agent-stack/templates/feature.yml` | Feature work on a specific product (one entry per product) | ⚙️ Ejemplo — no en OSS |
+
+Las filas marcadas **⚙️ Ejemplo — no en OSS** clonan repos de orgs privadas y no se distribuyen en el registry público. Son la referencia de cómo declararías templates equivalentes en tu propia topología. Lo que realmente tenés disponible siempre lo dice `wsp templates`.
 
 ## Cómo usar un template
 
