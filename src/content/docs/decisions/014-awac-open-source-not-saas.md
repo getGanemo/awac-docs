@@ -22,7 +22,7 @@ Las dos opciones tienen tracción potencial:
 
 Concretamente:
 
-1. El CLI (`getGanemo/workspace-cli`) y los stacks transversales del registry público (`getGanemo/agent-stack-{core,aws,mcp,cloudflare,research}`) se hacen públicos.
+1. El CLI (`getGanemo/workspace-cli-oss`) y los stacks transversales del registry público (`getGanemo/agent-stack-{core,aws,mcp,cloudflare,research}`) se hacen públicos.
 2. Los stacks de productos comerciales y los stacks privados de equipos siguen privados. AWaC puede componer stacks privados sin problema; los públicos sirven como ejemplo + base universal.
 3. La documentación se extrae de un repo interno a un repo nuevo `getGanemo/awac-docs` (público) que hospeda solo la sección AWaC. Los docs internos quedan privados para conocimiento del equipo.
 4. Distribución: GitHub Releases del CLI (ya en marcha) + sitio docs estático en dominio propio (Cloudflare Pages).

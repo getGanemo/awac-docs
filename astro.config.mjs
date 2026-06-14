@@ -10,7 +10,7 @@ export default defineConfig({
       logo: { src: './src/assets/logo.svg', replacesTitle: false },
       favicon: '/favicon.svg',
       social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/getGanemo/workspace-cli' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/getGanemo/workspace-cli-oss' },
       ],
       editLink: {
         baseUrl: 'https://github.com/getGanemo/awac-docs/edit/main/',

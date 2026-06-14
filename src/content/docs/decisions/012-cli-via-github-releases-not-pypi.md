@@ -10,7 +10,7 @@ title: "ADR 012 — Distribución del CLI vía GitHub Releases (wheel attached),
 Tras los primeros tags del CLI (`v0.1.0` → `v0.7.0` durante 2026-05-02 / 2026-05-03), el flujo de instalación era:
 
 ```bash
-git clone https://github.com/getGanemo/workspace-cli ~/dev/workspace-cli
+git clone https://github.com/getGanemo/workspace-cli-oss ~/dev/workspace-cli
 pipx install -e ~/dev/workspace-cli
 ```
 
@@ -26,7 +26,7 @@ Las opciones reales eran:
 
 **Fase actual (durante la incubación interna):** GitHub Releases con wheel + sdist attached por cada tag.
 
-Workflow `release.yml` en `getGanemo/workspace-cli/.github/workflows/`:
+Workflow `release.yml` en `getGanemo/workspace-cli-oss/.github/workflows/`:
 - Trigger en push de tag `v*`.
 - `python -m build` arma wheel + sdist.
 - `gh release create $TAG --notes... dist/*.whl dist/*.tar.gz`.
@@ -35,7 +35,7 @@ Instalación:
 
 ```bash
 TAG=v0.7.0
-gh release download "$TAG" --repo getGanemo/workspace-cli --pattern '*.whl' --dir /tmp/wsp
+gh release download "$TAG" --repo getGanemo/workspace-cli-oss --pattern '*.whl' --dir /tmp/wsp
 pipx install /tmp/wsp/wsp-*.whl
 ```
 
@@ -65,9 +65,9 @@ Workflow `install_wsp` en `<transversal-org>/agent-stack-core/workflows/` automa
 
 ## Implementación
 
-- Workflow: [`getGanemo/workspace-cli/.github/workflows/release.yml`](https://github.com/getGanemo/workspace-cli/blob/main/.github/workflows/release.yml).
-- Releases vivos: <https://github.com/getGanemo/workspace-cli/releases>.
-- README install: [`getGanemo/workspace-cli/README.md`](https://github.com/getGanemo/workspace-cli/blob/main/README.md).
+- Workflow: [`getGanemo/workspace-cli-oss/.github/workflows/release.yml`](https://github.com/getGanemo/workspace-cli-oss/blob/main/.github/workflows/release.yml).
+- Releases vivos: <https://github.com/getGanemo/workspace-cli-oss/releases>.
+- README install: [`getGanemo/workspace-cli-oss/README.md`](https://github.com/getGanemo/workspace-cli-oss/blob/main/README.md).
 - Workflow universal de instalación: `install_wsp` (publicado en `<transversal-org>/agent-stack-core/workflows/`).
 
 ## Ver también

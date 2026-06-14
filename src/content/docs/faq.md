@@ -220,7 +220,7 @@ Si tu equipo ya tiene un patrón `docs-<dominio>` (`docs-engineering`, `docs-tre
 
 ### ¿AWaC es público?
 
-Sí. El CLI vive en [`getGanemo/workspace-cli`](https://github.com/getGanemo/workspace-cli) (MIT). Estos docs viven en [`getGanemo/awac-docs`](https://github.com/getGanemo/awac-docs).
+Sí. El CLI vive en [`getGanemo/workspace-cli-oss`](https://github.com/getGanemo/workspace-cli-oss) (MIT). Estos docs viven en [`getGanemo/awac-docs`](https://github.com/getGanemo/awac-docs).
 
 ### ¿Quién acuñó AWaC?
 

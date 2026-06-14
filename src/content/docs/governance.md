@@ -90,7 +90,7 @@ Si un PR queda sin revisar más de 5 días, el owner debería ser pinged explíc
 
 ### Cambio a `wsp` (CLI)
 
-1. PR contra `getGanemo/workspace-cli`. Tests deben pasar.
+1. PR contra `getGanemo/workspace-cli-oss`. Tests deben pasar.
 2. Tras merge, taggear `vX.Y.Z`. El workflow `release.yml` arma el wheel y lo publica como GitHub Release.
 3. Cualquier dev/agente actualiza con el flujo del workflow `install_wsp` (en `<transversal-org>/agent-stack-core/workflows/`).
 

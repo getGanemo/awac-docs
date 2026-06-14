@@ -16,7 +16,7 @@ Sin ese paso manual, comandos como `wsp init my-feature --template <product>-fea
 
 ## Decisión
 
-`wsp scaffold-stack <org>` ahora **auto-registra** shortcut + template entry en el core registry como último paso del flujo, con un commit directo a `main` de `getGanemo/agent-stack-core/awac.yml`. Implementación en [`scaffold_stack_action.py#_register_in_core_registry`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/scaffold_stack_action.py).
+`wsp scaffold-stack <org>` ahora **auto-registra** shortcut + template entry en el core registry como último paso del flujo, con un commit directo a `main` de `getGanemo/agent-stack-core/awac.yml`. Implementación en [`scaffold_stack_action.py#_register_in_core_registry`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/scaffold_stack_action.py).
 
 Detalles:
 - **Idempotente**: si el shortcut o template ya existen (string match), no-op.
@@ -45,7 +45,7 @@ Detalles:
 
 ## Implementación
 
-- Función: [`_register_in_core_registry`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/scaffold_stack_action.py).
+- Función: [`_register_in_core_registry`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/scaffold_stack_action.py).
 - Flag: `--no-register` para opt-out.
 - Output fields: `registry_updated: bool`, `registry_message: str`.
 - Validación post-cambio: `wsp audit <product>` checks `registry/shortcut` + `registry/template`.

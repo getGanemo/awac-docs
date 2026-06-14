@@ -43,7 +43,7 @@ El CLI ya tiene `gh` autenticado en la máquina del developer (requisito para cl
 
 ## Implementación
 
-- Comparator: [`getGanemo/workspace-cli/wsp/governance.py`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/governance.py).
+- Comparator: [`getGanemo/workspace-cli-oss/wsp/governance.py`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/governance.py).
 - Comando: [`wsp governance check`](../05-cli-reference.md).
 - `wsp doctor` step: `governance_mirror`.
 

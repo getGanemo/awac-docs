@@ -23,7 +23,7 @@ title: "Referencia del CLI `wsp`"
 | **v1.1.0** | + schemas `awac/2` + `deploy/2` + `lock/2`, bootstrap materializes `.stack/<product>/`, doctor `stack_metadata_drift`, deploy/secrets `--no-overrides`, `init --interactive`/`--yes`, `wsp guide <topic>`, `wsp migrate-deploy <product>`, `wsp templates --json` exposes `requires_confirmation`/`composes_stacks`/`clones_repos` | 2026-05-04 |
 | v1.2+ (futuro) | `+ promote`, `worktree add/list/remove`, `explain`, `diff` | Planeado |
 
-Repo: <https://github.com/getGanemo/workspace-cli>. Releases (wheels): <https://github.com/getGanemo/workspace-cli/releases>.
+Repo: <https://github.com/getGanemo/workspace-cli-oss>. Releases (wheels): <https://github.com/getGanemo/workspace-cli-oss/releases>.
 
 ## Instalación
 
@@ -31,7 +31,7 @@ Repo: <https://github.com/getGanemo/workspace-cli>. Releases (wheels): <https://
 
 ```bash
 TAG=v1.1.0
-gh release download "$TAG" --repo getGanemo/workspace-cli --pattern '*.whl' --dir /tmp/wsp
+gh release download "$TAG" --repo getGanemo/workspace-cli-oss --pattern '*.whl' --dir /tmp/wsp
 pipx install /tmp/wsp/wsp-*.whl
 ```
 
@@ -40,7 +40,7 @@ Para automatización, el workflow universal `install_wsp` (en `<transversal-org>
 ### Modo dev (para hackear el CLI)
 
 ```bash
-git clone https://github.com/getGanemo/workspace-cli ~/dev/workspace-cli
+git clone https://github.com/getGanemo/workspace-cli-oss ~/dev/workspace-cli
 pipx install -e ~/dev/workspace-cli
 ```
 

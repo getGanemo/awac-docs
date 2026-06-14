@@ -45,7 +45,7 @@ Sin `--update`, contra un repo existente, el comando refusa con remediation expl
 
 ## Implementación
 
-- Action module: [`wsp/scaffold_repo_action.py`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/scaffold_repo_action.py).
+- Action module: [`wsp/scaffold_repo_action.py`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/scaffold_repo_action.py).
 - Funciones clave: `audit_readme()`, `patch_existing_readme()`, `run_scaffold_repo()`.
 - Comando: [`wsp scaffold-repo`](../05-cli-reference.md).
 - Skill `create_repo_readme` (publicada en `<transversal-org>/agent-stack-core/skills/`).

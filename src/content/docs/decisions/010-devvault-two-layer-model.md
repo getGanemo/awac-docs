@@ -47,8 +47,8 @@ El schema `devvault/1` **explícitamente prohíbe** una clave `vault_path` dentr
 
 ## Implementación
 
-- Schema: [`getGanemo/workspace-cli/wsp/schemas/devvault.schema.json`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/schemas/devvault.schema.json).
-- Action module: [`wsp/secrets_action.py`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/secrets_action.py).
+- Schema: [`getGanemo/workspace-cli-oss/wsp/schemas/devvault.schema.json`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/schemas/devvault.schema.json).
+- Action module: [`wsp/secrets_action.py`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/secrets_action.py).
 - Rule universal: `use_devvault.md` (publicada en `<transversal-org>/agent-stack-core/rules/`).
 - Comando: [`wsp secrets check <product>`](../05-cli-reference.md).
 - `wsp doctor` step: `devvault_config`.

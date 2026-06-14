@@ -140,7 +140,7 @@ El agente puede descubrir el estado del sistema sin docs.
 
 ## Implementación
 
-El primer commit del repo `getGanemo/workspace-cli` será el **contrato** (`--agent-manifest` + JSON schemas), no la implementación. Eso garantiza que el contrato es estable desde día 1 y la implementación se construye encima.
+El primer commit del repo `getGanemo/workspace-cli-oss` será el **contrato** (`--agent-manifest` + JSON schemas), no la implementación. Eso garantiza que el contrato es estable desde día 1 y la implementación se construye encima.
 
 ## Notes
 

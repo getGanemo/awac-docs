@@ -54,8 +54,8 @@ Razones:
 
 ## Implementación
 
-- Schema: [`getGanemo/workspace-cli/wsp/schemas/deploy.schema.json`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/schemas/deploy.schema.json).
-- Action module: [`wsp/deploy_action.py`](https://github.com/getGanemo/workspace-cli/blob/main/wsp/deploy_action.py).
+- Schema: [`getGanemo/workspace-cli-oss/wsp/schemas/deploy.schema.json`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/schemas/deploy.schema.json).
+- Action module: [`wsp/deploy_action.py`](https://github.com/getGanemo/workspace-cli-oss/blob/main/wsp/deploy_action.py).
 - Comando: [`wsp deploy`](../05-cli-reference.md).
 - Workflow router: [`deploy_product`](https://github.com/getGanemo/agent-stack-core/blob/main/workflows/deploy_product.md).
 - Rule: [`use_deploy_spec`](https://github.com/getGanemo/agent-stack-core/blob/main/rules/use_deploy_spec.md).
